@@ -116,7 +116,7 @@ bool random_min_conflicts(int config[], int max_steps) {
                                         // used to restore the original value 
         int min_conflicts = conflicts(var, config);
         bool changed_min_conflicts = false;
-        for (int i = 0; i < 8; i++){
+        for (int i = 1; i <= 8; i++){
             config[var] = i; 
             int new_num_conflicts = conflicts(var, config);
             if (new_num_conflicts < min_conflicts){
@@ -134,22 +134,84 @@ bool random_min_conflicts(int config[], int max_steps) {
     return false;
 }
 
-int main() {
+bool cyclic_min_conflicts(int config[], int max_steps) {
+        
+    for (int i = 0; i < max_steps; i++){
+
+        if (fitness(config) == 28){
+            successfulRuns++;
+            return true;
+        }
+        for (int j = 0; j < 8; j++) {
+            int var = j;
+            // iterate through row positions in var's column
+            // move to the column which has smallest number of conflicts
+
+            int min_position = config[var]; // init min seen conflicts to current row of var column 
+                                            // if this is already in the min conflicts spot, then it can be 
+                                            // used to restore the original value 
+            int min_conflicts = conflicts(var, config);
+            bool changed_min_conflicts = false;
+            for (int i = 1; i <= 8; i++){
+                config[var] = i; 
+                int new_num_conflicts = conflicts(var, config);
+                if (new_num_conflicts < min_conflicts){
+                    min_position = i;
+                    min_conflicts = new_num_conflicts;
+                    changed_min_conflicts = true;
+                }
+            }
+            if (changed_min_conflicts == false) {
+                mutate(config, pmut);
+            }
+            config[var] = min_position;
+        }
+
+    }
+    return false;
+}
+
+int main(int argc, char* argv[]) {
     srand(time(0));
     int best_fitness = 0;
     vector<size_t> evals_per_run(0);
-    
-    /* generate random initial configuarion */
-    for (int i = 0; i < total_runs; i++){
-        int init_config[8];
-        random_config(init_config);
-
-        if (random_min_conflicts(init_config, 275)) {
-            evals_per_run.push_back(EVALS);
-        }
-
-        EVALS = 0;
+    if (argc < 2) {
+        cout << "enter command line argument:\n1 for random\n2 for cyclic" << endl;
+        return 0;
     }
-    cout << "successful runs: " << successfulRuns << endl;
-    cout << "average num evals: " << average_runs(evals_per_run, successfulRuns) << endl;
+    if (atoi(argv[1]) == 1) {
+        /* generate random initial configuarion */
+        for (int i = 0; i < total_runs; i++){
+            int init_config[8];
+            random_config(init_config);
+
+            if (random_min_conflicts(init_config, 250)) {
+                print_config(init_config);
+                cout << "NUM EVALS: " << EVALS << endl;
+                evals_per_run.push_back(EVALS);
+            }
+
+            EVALS = 0;
+        }
+        cout << "successful runs: " << successfulRuns << endl;
+        cout << "average num evals: " << average_runs(evals_per_run, successfulRuns) << endl;
+    }
+    else if (atoi(argv[1]) == 2) {
+        /* generate random initial configuarion */
+        for (int i = 0; i < total_runs; i++){
+            int init_config[8];
+            random_config(init_config);
+
+            if (cyclic_min_conflicts(init_config, 250)) {
+                print_config(init_config);
+                cout << "NUM EVALS: " << EVALS << endl;
+                evals_per_run.push_back(EVALS);
+            }
+
+            EVALS = 0;
+        }
+        cout << "successful runs: " << successfulRuns << endl;
+        cout << "average num evals: " << average_runs(evals_per_run, successfulRuns) << endl;
+    }
+    return 0;
 }
